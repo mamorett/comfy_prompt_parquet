@@ -24,6 +24,7 @@ new_entries = []
 db_df = None
 parquet_path = None
 override_mode = False
+use_parameters_mode = False
 
 
 def extract_positive_prompts_only(file_path: str) -> Dict[str, Any]:
@@ -72,6 +73,162 @@ def extract_positive_prompts_only(file_path: str) -> Dict[str, Any]:
             
     except Exception as e:
         raise Exception(f"Error reading PNG file: {e}")
+
+def extract_positive_prompts_parameters(file_path: str) -> Dict[str, Any]:
+    """Extract positive prompt using Parameters metadata and direct PNG properties."""
+    try:
+        with Image.open(file_path) as img:
+            if img.format != 'PNG':
+                raise ValueError(f"File is not a PNG: {img.format}")
+
+            metadata = img.info
+            result = {
+                'file_info': {
+                    'filename': os.path.basename(file_path),
+                    'size': img.size,
+                    'mode': img.mode
+                },
+                'positive_prompts': [],
+                'extraction_method': 'parameters'
+            }
+
+            # First, try the ORIGINAL parameters extraction
+            prompt_text = extract_positive_from_parameters_strict(metadata)
+            if prompt_text:
+                result['positive_prompts'].append({
+                    'text': prompt_text,
+                    'node_id': 'parameters',
+                    'node_type': 'parameters',
+                    'title': 'Parameters',
+                    'source': 'parameters'
+                })
+            else:
+                # If original method fails, try PNG properties as fallback
+                prompt_text = extract_positive_from_png_properties(metadata)
+                if prompt_text:
+                    result['positive_prompts'].append({
+                        'text': prompt_text,
+                        'node_id': 'png_properties',
+                        'node_type': 'png_properties',
+                        'title': 'PNG Properties',
+                        'source': 'png_properties'
+                    })
+
+            return result
+
+    except Exception as e:
+        raise Exception(f"Error reading PNG file: {e}")
+
+
+def extract_positive_from_parameters_strict(metadata: Dict[str, Any]) -> str:
+    """
+    Extract ONLY the positive prompt from an Automatic1111/SD WebUI-style
+    'parameters' metadata field.
+
+    Requirements:
+    - Do NOT include negative prompt text.
+    - Do NOT include leading 'Positive prompt:' label, if present.
+
+    Handles formats like:
+
+        Positive prompt: a cat in a hat
+        Negative prompt: lowres, bad anatomy
+        Steps: 20, Sampler: Euler, ...
+
+    or:
+
+        a cat in a hat
+        Negative prompt: ...
+        Steps: ...
+
+    or inline:
+
+        Positive prompt: a cat in a hat, cozy room, Steps: 20, ...
+    """
+    params_text = metadata.get('parameters')
+    if not params_text or not isinstance(params_text, str):
+        return ''
+
+    lines = params_text.splitlines()
+    positive_lines: List[str] = []
+
+    for line in lines:
+        stripped = line.strip()
+        lower = stripped.lower()
+
+        # Stop at negative prompt or settings lines (we don't want them)
+        if lower.startswith('negative prompt:'):
+            break
+        if lower.startswith('steps:'):
+            break
+
+        # Handle inline 'Steps:' on the same line as the prompt
+        # e.g. "Positive prompt: text, text, Steps: 20, Sampler: Euler"
+        if ' steps:' in lower:
+            # Keep only before 'Steps:'
+            before_steps, _ = stripped.split('Steps:', 1)
+            stripped = before_steps.strip()
+            lower = stripped.lower()
+            if not stripped:
+                break  # nothing left
+
+        # Strip leading "Positive prompt:" label if present
+        if lower.startswith('positive prompt:'):
+            stripped = stripped[len('Positive prompt:'):].strip()
+            # Recompute lower for further checks if needed
+            lower = stripped.lower()
+
+        if stripped:
+            positive_lines.append(stripped)
+
+    prompt_text = ' '.join(positive_lines).strip()
+    return prompt_text if is_valid_prompt_text(prompt_text) else ''
+
+
+def extract_positive_from_png_properties(metadata: Dict[str, Any]) -> str:
+    """
+    Fallback: extract a prompt-like text from common PNG text fields.
+
+    We intentionally DO NOT touch 'workflow' or JSON-like blobs here,
+    to avoid pulling entire workflows, and we avoid pure negative prompts.
+    """
+    candidate_keys = [
+        'parameters',         # sometimes positive prompt can hide here in non-standard cases
+        'prompt',
+        'positive',
+        'positive_prompt',
+        'description',
+        'comment',
+        'Comment',
+        'Description',
+        'Prompt',
+        'PositivePrompt',
+    ]
+
+    for key in candidate_keys:
+        if key in metadata:
+            value = metadata.get(key)
+            if isinstance(value, str):
+                text = value.strip()
+
+                # Avoid huge blobs / obvious JSON that look like full workflows
+                if len(text) > 2000:
+                    continue
+                if (text.startswith('{') and text.endswith('}')) or (text.startswith('[') and text.endswith(']')):
+                    continue
+
+                # Ignore text that starts with negative prompt label
+                if text.lower().startswith('negative prompt:'):
+                    continue
+
+                # Strip 'Positive prompt:' label if present
+                if text.lower().startswith('positive prompt:'):
+                    text = text[len('Positive prompt:'):].strip()
+
+                if is_valid_prompt_text(text):
+                    return text
+
+    return ''
 
 
 
@@ -557,8 +714,13 @@ def process_image(
     """
     try:
         # Extract prompts from PNG metadata
-        result = extract_positive_prompts_only(str(image_path))
+        if use_parameters_mode:
+            result = extract_positive_prompts_parameters(str(image_path))
+        else:
+            result = extract_positive_prompts_only(str(image_path))
+
         positive_prompts = result.get('positive_prompts', [])
+
         
         # Concatenate multiple prompts with separator
         if positive_prompts:
@@ -688,8 +850,18 @@ Examples:
         action='store_true',
         help='Override existing entries in database for images being processed (default: skip existing)'
     )
+    parser.add_argument(
+        '--use-parameters',
+        action='store_true',
+        help='Use A1111/parameters-style extraction instead of ComfyUI workflow/prompt JSON'
+    )
+
     
     args = parser.parse_args()
+    # Expose parameters-mode choice globally so process_image can use it
+    global use_parameters_mode
+    use_parameters_mode = args.use_parameters
+
     
     # Collect image files based on input method
     all_image_files = collect_image_files(args)
