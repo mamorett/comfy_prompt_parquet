@@ -301,123 +301,120 @@ def display_image_with_description(row: pd.Series, index: int, thumbnail_size: i
                         unsafe_allow_html=True
                     )
             
-            if description and pd.notna(description):
-                st.markdown("### Description")
+            st.markdown("### Description")
+            
+            if st.session_state[edit_key]:
+                edited_description = st.text_area(
+                    "Edit description:",
+                    value=description,
+                    height=300,
+                    key=f"edit_textarea_{index}",
+                    label_visibility="collapsed"
+                )
                 
-                if st.session_state[edit_key]:
-                    edited_description = st.text_area(
-                        "Edit description:",
-                        value=description,
-                        height=300,
-                        key=f"edit_textarea_{index}",
-                        label_visibility="collapsed"
-                    )
-                    
-                    btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 3])
-                    
-                    with btn_col1:
-                        if st.button("💾 Save", key=f"save_{index}", use_container_width=True, type="primary"):
-                            df = st.session_state[df_key]
-                            mask = df['image_path'] == str(image_path)
-                            df.loc[mask, 'description'] = edited_description
-                            
-                            # Update modified_at timestamp
-                            if 'modified_at' in df.columns:
-                                df.loc[mask, 'modified_at'] = pd.Timestamp.now()
-                            
-                            st.session_state[df_key] = df
-                            
-                            if save_parquet_db(df, st.session_state.parquet_path):
-                                st.session_state[edit_key] = False
-                                st.success("✓ Description saved!", icon="✅")
-                                st.rerun()
-                            else:
-                                st.error("Failed to save changes")
-                    
-                    with btn_col2:
-                        if st.button("❌ Cancel", key=f"cancel_{index}", use_container_width=True):
+                btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 3])
+                
+                with btn_col1:
+                    if st.button("💾 Save", key=f"save_{index}", use_container_width=True, type="primary"):
+                        df = st.session_state[df_key]
+                        mask = df['image_path'] == str(image_path)
+                        df.loc[mask, 'description'] = edited_description
+                        
+                        # Update modified_at timestamp
+                        if 'modified_at' in df.columns:
+                            df.loc[mask, 'modified_at'] = pd.Timestamp.now()
+                        
+                        st.session_state[df_key] = df
+                        
+                        if save_parquet_db(df, st.session_state.parquet_path):
                             st.session_state[edit_key] = False
+                            st.success("✓ Description saved!", icon="✅")
                             st.rerun()
-                    
-                    st.caption(f"📝 {len(edited_description)} characters")
+                        else:
+                            st.error("Failed to save changes")
                 
-                else:
-                    st.markdown(
-                        f'<div class="description-box">{description}</div>',
-                        unsafe_allow_html=True
-                    )
-                    
-                    st.markdown("")
-                    
-                    btn_col1, btn_col2, btn_col3, btn_col4, btn_col5 = st.columns([1, 1, 1, 1, 1])
-                    
-                    with btn_col1:
-                        if st.button(f"✏️ Edit", key=f"edit_{index}", use_container_width=True):
-                            st.session_state[edit_key] = True
-                            st.rerun()
-                    
-                    with btn_col2:
-                        if st.button(f"📋 Copy Desc", key=f"copy_desc_{index}", use_container_width=True):
-                            try:
-                                pyperclip.copy(description)
-                                st.toast("✓ Description copied!", icon="✅")
-                            except:
-                                st.session_state[f'show_copy_{index}'] = True
-                    
-                    with btn_col3:
-                        if st.button(f"💬 Copy Prompt", key=f"copy_prompt_{index}", use_container_width=True):
-                            try:
-                                pyperclip.copy(prompt)
-                                st.toast("✓ Prompt copied!", icon="✅")
-                            except:
-                                st.session_state[f'show_copy_prompt_{index}'] = True
-                    
-                    with btn_col4:
-                        if st.button(f"📁 Copy Path", key=f"copy_path_{index}", use_container_width=True):
-                            try:
-                                pyperclip.copy(str(image_path))
-                                st.toast("✓ Path copied!", icon="✅")
-                            except:
-                                st.session_state[f'show_copy_path_{index}'] = True
-                    
-                    with btn_col5:
-                        st.download_button(
-                            label="💾 Download",
-                            data=description,
-                            file_name=f"{image_path.stem}.txt",
-                            mime="text/plain",
-                            key=f"download_{index}",
-                            use_container_width=True
-                        )
-                    
-                    if st.session_state.get(f'show_copy_{index}', False):
-                        st.text_area(
-                            "Select and copy description:",
-                            value=description,
-                            height=100,
-                            key=f"manual_copy_{index}"
-                        )
-                    
-                    if st.session_state.get(f'show_copy_prompt_{index}', False):
-                        st.text_area(
-                            "Select and copy prompt:",
-                            value=prompt,
-                            height=50,
-                            key=f"manual_copy_prompt_{index}"
-                        )
-                    
-                    if st.session_state.get(f'show_copy_path_{index}', False):
-                        st.text_area(
-                            "Select and copy path:",
-                            value=str(image_path),
-                            height=50,
-                            key=f"manual_copy_path_{index}"
-                        )
-
-                    
-                    st.caption(f"📝 {len(description)} characters | Full path: {image_path}")
+                with btn_col2:
+                    if st.button("❌ Cancel", key=f"cancel_{index}", use_container_width=True):
+                        st.session_state[edit_key] = False
+                        st.rerun()
+                
+                st.caption(f"📝 {len(edited_description)} characters")
+            
             else:
-                st.warning("⚠️ No description found in database")
+                st.markdown(
+                    f'<div class="description-box">{description}</div>',
+                    unsafe_allow_html=True
+                )
+                
+                st.markdown("")
+                
+                btn_col1, btn_col2, btn_col3, btn_col4, btn_col5 = st.columns([1, 1, 1, 1, 1])
+                
+                with btn_col1:
+                    if st.button(f"✏️ Edit", key=f"edit_{index}", use_container_width=True):
+                        st.session_state[edit_key] = True
+                        st.rerun()
+                
+                with btn_col2:
+                    if st.button(f"📋 Copy Desc", key=f"copy_desc_{index}", use_container_width=True):
+                        try:
+                            pyperclip.copy(description)
+                            st.toast("✓ Description copied!", icon="✅")
+                        except:
+                            st.session_state[f'show_copy_{index}'] = True
+                
+                with btn_col3:
+                    if st.button(f"💬 Copy Prompt", key=f"copy_prompt_{index}", use_container_width=True):
+                        try:
+                            pyperclip.copy(prompt)
+                            st.toast("✓ Prompt copied!", icon="✅")
+                        except:
+                            st.session_state[f'show_copy_prompt_{index}'] = True
+                
+                with btn_col4:
+                    if st.button(f"📁 Copy Path", key=f"copy_path_{index}", use_container_width=True):
+                        try:
+                            pyperclip.copy(str(image_path))
+                            st.toast("✓ Path copied!", icon="✅")
+                        except:
+                            st.session_state[f'show_copy_path_{index}'] = True
+                
+                with btn_col5:
+                    st.download_button(
+                        label="💾 Download",
+                        data=description,
+                        file_name=f"{image_path.stem}.txt",
+                        mime="text/plain",
+                        key=f"download_{index}",
+                        use_container_width=True
+                    )
+                
+                if st.session_state.get(f'show_copy_{index}', False):
+                    st.text_area(
+                        "Select and copy description:",
+                        value=description,
+                        height=100,
+                        key=f"manual_copy_{index}"
+                    )
+                
+                if st.session_state.get(f'show_copy_prompt_{index}', False):
+                    st.text_area(
+                        "Select and copy prompt:",
+                        value=prompt,
+                        height=50,
+                        key=f"manual_copy_prompt_{index}"
+                    )
+                
+                if st.session_state.get(f'show_copy_path_{index}', False):
+                    st.text_area(
+                        "Select and copy path:",
+                        value=str(image_path),
+                        height=50,
+                        key=f"manual_copy_path_{index}"
+                    )
+
+                
+                st.caption(f"📝 {len(description)} characters | Full path: {image_path}")
         
         st.divider()
 
