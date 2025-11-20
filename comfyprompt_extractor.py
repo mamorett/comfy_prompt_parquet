@@ -727,6 +727,12 @@ def process_image(
             prompt_text = ' | '.join([p['text'] for p in positive_prompts])
         else:
             prompt_text = ''
+
+        # If in parameters mode and no prompt is found, skip the image
+        if use_parameters_mode and not prompt_text:
+            if pbar:
+                pbar.set_postfix_str(f"✓ {image_path.name} (skipped)")
+            return True, "Skipped", "", {}
         
         # Prepare timestamps
         current_time = pd.Timestamp.now()
@@ -922,6 +928,7 @@ Examples:
     success_count = 0
     error_count = 0
     no_prompt_count = 0
+    skipped_no_prompt_count = 0
     new_entries = []
     
     with tqdm(
@@ -941,21 +948,25 @@ Examples:
             )
             
             if success:
-                success_count += 1
-                
-                # Track images with no prompts
-                if not prompt_text:
-                    no_prompt_count += 1
-                
-                # Add new entry with timestamps
-                # 'prompt' is empty for compatibility, 'description' contains the extracted prompt
-                new_entries.append({
-                    'image_path': str(image_path),
-                    'prompt': '',  # Empty for compatibility
-                    'description': prompt_text,  # Extracted prompt goes here
-                    'created_at': timestamps['created_at'],
-                    'modified_at': timestamps['modified_at']
-                })
+                if message == "Skipped":
+                    skipped_no_prompt_count += 1
+                    tqdm.write(f"✓ {image_path.name}: No prompt found, skipping.")
+                else:
+                    success_count += 1
+                    
+                    # Track images with no prompts
+                    if not prompt_text:
+                        no_prompt_count += 1
+                    
+                    # Add new entry with timestamps
+                    # 'prompt' is empty for compatibility, 'description' contains the extracted prompt
+                    new_entries.append({
+                        'image_path': str(image_path),
+                        'prompt': '',  # Empty for compatibility
+                        'description': prompt_text,  # Extracted prompt goes here
+                        'created_at': timestamps['created_at'],
+                        'modified_at': timestamps['modified_at']
+                    })
 
             else:
                 error_count += 1
@@ -977,6 +988,8 @@ Examples:
     print(f"✓ Successfully processed: {success_count}")
     if no_prompt_count > 0:
         print(f"⚠ Images with no prompts found: {no_prompt_count}")
+    if skipped_no_prompt_count > 0:
+        print(f"✓ Images skipped (no prompt in --parameters mode): {skipped_no_prompt_count}")
     if error_count > 0:
         print(f"✗ Errors: {error_count}")
     if skipped_count > 0:
