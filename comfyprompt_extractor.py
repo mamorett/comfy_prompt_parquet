@@ -559,20 +559,25 @@ def is_supported_image(file_path: Path) -> bool:
     return file_path.suffix.lower() == '.png'
 
 
-def get_image_files_from_directory(directory: Path) -> List[Path]:
+def get_image_files_from_directory(directory: Path, recursive: bool = False) -> List[Path]:
     """
     Get all PNG files from a directory with full paths.
     
     Args:
         directory: Directory path to search
+        recursive: Whether to search recursively in subdirectories
         
     Returns:
         List of absolute PNG file paths
     """
     image_files = []
     
-    image_files.extend(directory.glob("*.png"))
-    image_files.extend(directory.glob("*.PNG"))
+    if recursive:
+        image_files.extend(directory.rglob("*.png"))
+        image_files.extend(directory.rglob("*.PNG"))
+    else:
+        image_files.extend(directory.glob("*.png"))
+        image_files.extend(directory.glob("*.PNG"))
     
     # Convert to absolute paths
     return sorted([img.resolve() for img in image_files])
@@ -664,7 +669,7 @@ def collect_image_files(args) -> List[Path]:
         
         # Check if it's a directory
         if input_path.exists() and input_path.is_dir():
-            all_files = get_image_files_from_directory(input_path)
+            all_files = get_image_files_from_directory(input_path, args.recursive)
         
         # Check if it's a single file
         elif input_path.exists() and input_path.is_file():
@@ -691,7 +696,7 @@ def collect_image_files(args) -> List[Path]:
         if not input_path.is_dir():
             print(f"✗ Error: '{args.directory}' is not a directory")
             return []
-        all_files = get_image_files_from_directory(input_path)
+        all_files = get_image_files_from_directory(input_path, args.recursive)
     
     return all_files
 
@@ -860,6 +865,12 @@ Examples:
         '--use-parameters',
         action='store_true',
         help='Use A1111/parameters-style extraction instead of ComfyUI workflow/prompt JSON'
+    )
+    parser.add_argument(
+        '--recursive',
+        '-r',
+        action='store_true',
+        help='Recursively search for images in subdirectories (only applies when input is a directory)'
     )
 
     

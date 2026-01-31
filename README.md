@@ -11,7 +11,7 @@ This project provides a set of tools to extract prompts from ComfyUI-generated i
 
 *   **Prompt Extraction**: Extracts positive prompts from ComfyUI PNG metadata.
 *   **Parquet Database**: Saves extracted data to an efficient Parquet file.
-*   **Multiple Input Sources**: Process images from a directory, a single file, a glob pattern, or a list of files.
+*   **Multiple Input Sources**: Process images from a directory, a single file, a glob pattern, or a list of files. Supports recursive directory search.
 *   **Idempotency**: Skips already processed images unless the `--override` flag is used.
 *   **Graceful Shutdown**: Saves progress on `Ctrl-C`.
 
@@ -42,6 +42,12 @@ Run the `comfyprompt_extractor.py` script to populate your Parquet database.
 
 ```bash
 python comfyprompt_extractor.py -i /path/to/your/images --database prompts.parquet
+```
+
+**Recursively process all PNGs in a directory and subdirectories:**
+
+```bash
+python comfyprompt_extractor.py -i /path/to/your/images --database prompts.parquet --recursive
 ```
 
 **Process a single file:**
