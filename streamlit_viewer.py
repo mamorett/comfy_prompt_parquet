@@ -26,7 +26,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS for better styling
+# Custom CSS for high contrast
 st.markdown("""
     <style>
     .description-box {
@@ -41,17 +41,6 @@ st.markdown("""
         line-height: 1.6;
         white-space: pre-wrap;
         word-wrap: break-word;
-    }
-    
-    .prompt-box {
-        background-color: #e7f3ff;
-        color: #000000;
-        padding: 10px;
-        border-radius: 5px;
-        border: 1px solid #b3d9ff;
-        margin-bottom: 10px;
-        font-size: 0.9em;
-        font-style: italic;
     }
     
     .timestamp-box {
@@ -76,73 +65,11 @@ st.markdown("""
             color: #ffffff;
             border-color: #404040;
         }
-        .prompt-box {
-            background-color: #1a3a52;
-            color: #ffffff;
-            border-color: #2a5a82;
-        }
         .timestamp-box {
             background-color: #2b2b2b;
             color: #ffffff;
             border-color: #404040;
         }
-    }
-    
-    /* Force dark mode if Streamlit is in dark theme */
-    [data-testid="stAppViewContainer"][data-theme="dark"] .description-box {
-        background-color: #2b2b2b;
-        color: #ffffff;
-        border-color: #404040;
-    }
-    
-    [data-testid="stAppViewContainer"][data-theme="dark"] .prompt-box {
-        background-color: #1a3a52;
-        color: #ffffff;
-        border-color: #2a5a82;
-    }
-    
-    [data-testid="stAppViewContainer"][data-theme="dark"] .timestamp-box {
-        background-color: #2b2b2b;
-        color: #ffffff;
-        border-color: #404040;
-    }
-    
-    /* Force light mode if Streamlit is in light theme */
-    [data-testid="stAppViewContainer"][data-theme="light"] .description-box {
-        background-color: #f8f9fa;
-        color: #000000;
-        border-color: #dee2e6;
-    }
-    
-    [data-testid="stAppViewContainer"][data-theme="light"] .prompt-box {
-        background-color: #e7f3ff;
-        color: #000000;
-        border-color: #b3d9ff;
-    }
-    
-    [data-testid="stAppViewContainer"][data-theme="light"] .timestamp-box {
-        background-color: #f0f0f0;
-        color: #000000;
-        border-color: #d0d0d0;
-    }
-    
-    /* Navigation styling */
-    .nav-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 20px 0;
-        gap: 10px;
-    }
-    
-    .page-info {
-        text-align: center;
-        font-size: 1.1em;
-        font-weight: 500;
-        padding: 10px 20px;
-        background-color: #f0f2f6;
-        border-radius: 5px;
-        margin: 0 10px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -244,7 +171,6 @@ def format_datetime(dt) -> str:
 def display_image_with_description(row: pd.Series, index: int, thumbnail_size: int = 300, df_key: str = "main_df"):
     """Display an image with its description."""
     image_path = Path(row['image_path'])
-    prompt = row['prompt']
     description = row['description']
     created_at = row.get('created_at', None)
     modified_at = row.get('modified_at', None)
@@ -279,12 +205,6 @@ def display_image_with_description(row: pd.Series, index: int, thumbnail_size: i
                 st.caption(f"📁 {image_path}")
         
         with col2:
-            st.markdown("### Prompt")
-            st.markdown(
-                f'<div class="prompt-box">💬 {prompt}</div>',
-                unsafe_allow_html=True
-            )
-            
             # Display timestamps if available
             if created_at is not None or modified_at is not None:
                 timestamp_text = ""
@@ -301,11 +221,11 @@ def display_image_with_description(row: pd.Series, index: int, thumbnail_size: i
                         unsafe_allow_html=True
                     )
             
-            st.markdown("### Description")
+            st.markdown("### Prompt")
             
             if st.session_state[edit_key]:
                 edited_description = st.text_area(
-                    "Edit description:",
+                    "Edit prompt:",
                     value=description,
                     height=300,
                     key=f"edit_textarea_{index}",
@@ -328,7 +248,7 @@ def display_image_with_description(row: pd.Series, index: int, thumbnail_size: i
                         
                         if save_parquet_db(df, st.session_state.parquet_path):
                             st.session_state[edit_key] = False
-                            st.success("✓ Description saved!", icon="✅")
+                            st.success("✓ Prompt saved!", icon="✅")
                             st.rerun()
                         else:
                             st.error("Failed to save changes")
@@ -348,7 +268,7 @@ def display_image_with_description(row: pd.Series, index: int, thumbnail_size: i
                 
                 st.markdown("")
                 
-                btn_col1, btn_col2, btn_col3, btn_col4, btn_col5 = st.columns([1, 1, 1, 1, 1])
+                btn_col1, btn_col2, btn_col3, btn_col4 = st.columns([1, 1, 1, 1])
                 
                 with btn_col1:
                     if st.button(f"✏️ Edit", key=f"edit_{index}", use_container_width=True):
@@ -356,32 +276,24 @@ def display_image_with_description(row: pd.Series, index: int, thumbnail_size: i
                         st.rerun()
                 
                 with btn_col2:
-                    if st.button(f"📋 Copy Desc", key=f"copy_desc_{index}", use_container_width=True):
+                    if st.button(f"📋 Copy", key=f"copy_desc_{index}", use_container_width=True):
                         try:
                             pyperclip.copy(description)
-                            st.toast("✓ Description copied!", icon="✅")
+                            st.toast("✓ Copied!", icon="✅")
                         except:
                             st.session_state[f'show_copy_{index}'] = True
                 
                 with btn_col3:
-                    if st.button(f"💬 Copy Prompt", key=f"copy_prompt_{index}", use_container_width=True):
-                        try:
-                            pyperclip.copy(prompt)
-                            st.toast("✓ Prompt copied!", icon="✅")
-                        except:
-                            st.session_state[f'show_copy_prompt_{index}'] = True
-                
-                with btn_col4:
-                    if st.button(f"📁 Copy Path", key=f"copy_path_{index}", use_container_width=True):
+                    if st.button(f"📁 Path", key=f"copy_path_{index}", use_container_width=True):
                         try:
                             pyperclip.copy(str(image_path))
                             st.toast("✓ Path copied!", icon="✅")
                         except:
                             st.session_state[f'show_copy_path_{index}'] = True
                 
-                with btn_col5:
+                with btn_col4:
                     st.download_button(
-                        label="💾 Download",
+                        label="💾 Text",
                         data=description,
                         file_name=f"{image_path.stem}.txt",
                         mime="text/plain",
@@ -390,28 +302,10 @@ def display_image_with_description(row: pd.Series, index: int, thumbnail_size: i
                     )
                 
                 if st.session_state.get(f'show_copy_{index}', False):
-                    st.text_area(
-                        "Select and copy description:",
-                        value=description,
-                        height=100,
-                        key=f"manual_copy_{index}"
-                    )
-                
-                if st.session_state.get(f'show_copy_prompt_{index}', False):
-                    st.text_area(
-                        "Select and copy prompt:",
-                        value=prompt,
-                        height=50,
-                        key=f"manual_copy_prompt_{index}"
-                    )
+                    st.text_area("Select and copy:", value=description, height=100, key=f"manual_copy_{index}")
                 
                 if st.session_state.get(f'show_copy_path_{index}', False):
-                    st.text_area(
-                        "Select and copy path:",
-                        value=str(image_path),
-                        height=50,
-                        key=f"manual_copy_path_{index}"
-                    )
+                    st.text_area("Select and copy path:", value=str(image_path), height=50, key=f"manual_copy_path_{index}")
 
                 
                 st.caption(f"📝 {len(description)} characters | Full path: {image_path}")
@@ -472,8 +366,10 @@ def apply_search_filter(df: pd.DataFrame, search_query: str, search_in: str) -> 
         return df
     
     search_lower = search_query.lower()
+    # Normalize slashes for search query if it looks like a path
+    search_norm = search_lower.replace('\\', '/')
     
-    if search_in == "Filename OR Description":
+    if search_in == "Filename OR Prompt":
         df_copy = df.copy()
         df_copy['filename'] = df_copy['image_path'].apply(lambda x: Path(x).name.lower())
         mask = (
@@ -482,7 +378,7 @@ def apply_search_filter(df: pd.DataFrame, search_query: str, search_in: str) -> 
         )
         return df[mask]
     
-    elif search_in == "Description":
+    elif search_in == "Prompt":
         mask = df['description'].fillna('').str.lower().str.contains(search_lower, na=False)
         return df[mask]
     
@@ -493,20 +389,18 @@ def apply_search_filter(df: pd.DataFrame, search_query: str, search_in: str) -> 
         return df[mask]
     
     elif search_in == "Full Path":
-        mask = df['image_path'].str.lower().str.contains(search_lower, na=False)
-        return df[mask]
-    
-    elif search_in == "Prompt":
-        mask = df['prompt'].str.lower().str.contains(search_lower, na=False)
+        # Normalize paths to use forward slashes for consistent searching
+        path_series = df['image_path'].str.lower().str.replace('\\', '/', regex=False)
+        mask = path_series.str.contains(search_norm, na=False)
         return df[mask]
     
     else:  # All
         df_copy = df.copy()
         df_copy['filename'] = df_copy['image_path'].apply(lambda x: Path(x).name.lower())
+        path_series = df_copy['image_path'].str.lower().str.replace('\\', '/', regex=False)
         mask = (
             df_copy['description'].fillna('').str.lower().str.contains(search_lower, na=False) |
-            df_copy['image_path'].str.lower().str.contains(search_lower, na=False) |
-            df_copy['prompt'].str.lower().str.contains(search_lower, na=False)
+            path_series.str.contains(search_norm, na=False)
         )
         return df[mask]
 
@@ -518,9 +412,9 @@ def apply_sorting(df: pd.DataFrame, sort_option: str) -> pd.DataFrame:
     elif sort_option == "Image Name (Z-A)":
         return df.sort_values('image_path', ascending=False)
     elif sort_option == "Prompt (A-Z)":
-        return df.sort_values('prompt')
+        return df.sort_values('description')
     elif sort_option == "Prompt (Z-A)":
-        return df.sort_values('prompt', ascending=False)
+        return df.sort_values('description', ascending=False)
     elif sort_option == "Created Date (Newest First)":
         if 'created_at' in df.columns:
             # Put NaT values at the end
@@ -679,6 +573,34 @@ def main():
             
             st.markdown("---")
             st.markdown("### 🔍 Filters")
+
+            # Extract subdirectories from image_path for a dropdown
+            # We want to find common date-like or folder-like components
+            def get_all_subdirs(df):
+                subdirs = set()
+                for p in df['image_path'].dropna():
+                    parts = Path(p).parts
+                    # Add all parts except the filename and the root
+                    for part in parts[:-1]:
+                        if part and part != '/' and part != '\\':
+                            subdirs.add(part)
+                return sorted(list(subdirs), reverse=True) # Usually want newest dates first
+
+            available_subdirs = get_all_subdirs(df)
+            
+            selected_subdirs = st.multiselect(
+                "Limit to Subdirectory (Select)",
+                options=available_subdirs,
+                default=[],
+                help="Select one or more subdirectories to filter by."
+            )
+
+            subdir_query = st.text_input(
+                "Limit to Subdirectory (Manual Search)",
+                value="",
+                placeholder="e.g. 2026-03-12",
+                help="Only show images whose path contains this subdirectory name."
+            )
             
             existence_filter = st.radio(
                 "Show",
@@ -692,6 +614,28 @@ def main():
                 filtered_df = df[~df['exists']].copy()
             else:
                 filtered_df = df.copy()
+
+            # Apply subdirectory filters
+            if selected_subdirs or subdir_query:
+                path_series = filtered_df['image_path'].str.lower().str.replace('\\', '/', regex=False)
+                
+                mask = pd.Series(True, index=filtered_df.index)
+                
+                if selected_subdirs:
+                    # Match any of the selected subdirs
+                    subdir_mask = pd.Series(False, index=filtered_df.index)
+                    for sd in selected_subdirs:
+                        subdir_mask |= path_series.str.contains(f"/{sd.lower()}/", na=False) | \
+                                      path_series.str.endswith(f"/{sd.lower()}", na=False) | \
+                                      path_series.str.startswith(f"{sd.lower()}/", na=False) | \
+                                      (path_series == sd.lower())
+                    mask &= subdir_mask
+                
+                if subdir_query:
+                    subdir_norm = subdir_query.lower().replace('\\', '/')
+                    mask &= path_series.str.contains(subdir_norm, na=False)
+                
+                filtered_df = filtered_df[mask]
             
             unique_prompts = sorted(df['prompt'].unique())
             if len(unique_prompts) > 1:
@@ -745,15 +689,15 @@ def main():
             
             search_in = st.selectbox(
                 "Search in",
-                ["Filename OR Description", "Description", "Filename", "Full Path", "Prompt", "All"],
+                ["Filename OR Prompt", "Prompt", "Filename", "Full Path", "All"],
                 index=0,
                 help="Choose where to search."
             )
             
             search_query = st.text_input("Search", "", placeholder="Enter search term...")
             
-            if search_in == "Filename OR Description":
-                st.caption("🔍 Will match if found in filename OR description")
+            if search_in == "Filename OR Prompt":
+                st.caption("🔍 Will match if found in filename OR prompt")
             elif search_in == "All":
                 st.caption("🔍 Will search across all fields")
             
@@ -763,7 +707,7 @@ def main():
                 st.info(f"Found {len(filtered_df)} matching result(s)")
             
             # Reset page only when filters actually change
-            current_filter = (existence_filter, sort_option, search_query, search_in)
+            current_filter = (existence_filter, sort_option, search_query, search_in, subdir_query, tuple(selected_subdirs))
             
             if 'last_filter' not in st.session_state:
                 st.session_state.last_filter = current_filter
@@ -780,8 +724,6 @@ def main():
         st.info("No entries match the current filter criteria")
         return
     
-    # Removed the white box that was here before
-    
     total_pages = (len(filtered_df) - 1) // items_per_page + 1
     
     if st.session_state.current_page > total_pages:
@@ -794,7 +736,6 @@ def main():
     start_idx = (current_page - 1) * items_per_page
     end_idx = min(start_idx + items_per_page, len(filtered_df))
     
-    # Simple caption instead of info box
     st.caption(f"Showing items {start_idx + 1}-{end_idx} of {len(filtered_df)}")
     
     page_df = filtered_df.iloc[start_idx:end_idx]
