@@ -26,52 +26,239 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS for high contrast
+# ── Nord Dark Custom CSS ──────────────────────────────────────────────────────
 st.markdown("""
-    <style>
-    .description-box {
-        background-color: #f8f9fa;
-        color: #000000;
-        padding: 20px;
-        border-radius: 8px;
-        border: 1px solid #dee2e6;
-        max-height: 400px;
-        overflow-y: auto;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        line-height: 1.6;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-    }
-    
-    .timestamp-box {
-        background-color: #f0f0f0;
-        color: #000000;
-        padding: 8px;
-        border-radius: 5px;
-        border: 1px solid #d0d0d0;
-        margin-top: 10px;
-        font-size: 0.85em;
-    }
-    
-    .stImage {
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    /* Dark mode support */
-    @media (prefers-color-scheme: dark) {
-        .description-box {
-            background-color: #2b2b2b;
-            color: #ffffff;
-            border-color: #404040;
-        }
-        .timestamp-box {
-            background-color: #2b2b2b;
-            color: #ffffff;
-            border-color: #404040;
-        }
-    }
-    </style>
+<style>
+/* ── Google Font import ── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ── Global base ── */
+html, body, [class*="css"] {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ── Main content area background ── */
+.stApp {
+    background-color: #2E3440;
+}
+
+/* ── Sidebar ── */
+[data-testid="stSidebar"] {
+    background-color: #3B4252;
+    border-right: 1px solid #4C566A;
+}
+[data-testid="stSidebar"] .stMarkdown h3,
+[data-testid="stSidebar"] .stMarkdown h2 {
+    color: #88C0D0;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    margin-top: 1.2rem;
+    margin-bottom: 0.3rem;
+}
+[data-testid="stSidebar"] .stCaption {
+    color: #8FBCBB;
+    font-size: 0.78rem;
+}
+
+/* ── Sidebar section dividers ── */
+[data-testid="stSidebar"] hr {
+    border-color: #4C566A;
+    margin: 0.6rem 0;
+}
+
+/* ── Prompt / Description box ── */
+.description-box {
+    background-color: #3B4252;
+    color: #E5E9F0;
+    padding: 18px 20px;
+    border-radius: 10px;
+    border: 1px solid #4C566A;
+    max-height: 420px;
+    overflow-y: auto;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 0.92rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+    scrollbar-width: thin;
+    scrollbar-color: #4C566A #2E3440;
+}
+.description-box::-webkit-scrollbar { width: 6px; }
+.description-box::-webkit-scrollbar-track { background: #2E3440; }
+.description-box::-webkit-scrollbar-thumb { background-color: #4C566A; border-radius: 3px; }
+
+/* ── Filename bar ── */
+.filename-box {
+    background-color: #434C5E;
+    color: #ECEFF4;
+    padding: 8px 14px;
+    border-radius: 8px 8px 0 0;
+    font-size: 0.88rem;
+    font-weight: 600;
+    border: 1px solid #4C566A;
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+/* ── Timestamp bar ── */
+.timestamp-box {
+    background-color: #3B4252;
+    color: #8FBCBB;
+    padding: 6px 12px;
+    border-radius: 0 0 8px 8px;
+    border-left: 3px solid #88C0D0;
+    border: 1px solid #4C566A;
+    border-top: none;
+    margin-bottom: 14px;
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
+}
+
+/* ── Image shadow ── */
+[data-testid="stImage"] img {
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.45);
+    border: 1px solid #4C566A;
+    transition: box-shadow 0.2s ease;
+}
+[data-testid="stImage"] img:hover {
+    box-shadow: 0 6px 24px rgba(136, 192, 208, 0.25);
+}
+
+/* ── Captions under images ── */
+.stCaption {
+    color: #81A1C1;
+    font-size: 0.78rem;
+}
+
+/* ── Section headings in main area ── */
+h1 {
+    color: #ECEFF4;
+    font-weight: 700;
+}
+h2, h3 {
+    color: #88C0D0;
+}
+
+/* ── st.metric cards ── */
+[data-testid="stMetric"] {
+    background-color: #3B4252;
+    border: 1px solid #4C566A;
+    border-radius: 8px;
+    padding: 10px 14px;
+}
+[data-testid="stMetricLabel"] {
+    color: #81A1C1 !important;
+    font-size: 0.75rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+[data-testid="stMetricValue"] {
+    color: #ECEFF4 !important;
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+}
+
+/* ── Divider lines ── */
+hr {
+    border-color: #4C566A !important;
+}
+
+/* ── st.info / st.warning / st.success / st.error ── */
+[data-testid="stAlert"] {
+    border-radius: 8px;
+    font-size: 0.88rem;
+}
+
+/* ── Buttons ── */
+.stButton > button {
+    border-radius: 7px;
+    font-size: 0.84rem;
+    font-weight: 500;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+.stButton > button:hover {
+    box-shadow: 0 0 0 2px #88C0D0;
+}
+/* Primary button specifically */
+.stButton > button[kind="primary"] {
+    background-color: #81A1C1;
+    color: #2E3440;
+    font-weight: 600;
+}
+.stButton > button[kind="primary"]:hover {
+    background-color: #88C0D0;
+}
+
+/* ── Download button ── */
+.stDownloadButton > button {
+    border-radius: 7px;
+    font-size: 0.84rem;
+}
+
+/* ── Text inputs & text areas ── */
+.stTextInput input, .stTextArea textarea {
+    background-color: #3B4252 !important;
+    color: #E5E9F0 !important;
+    border-color: #4C566A !important;
+    border-radius: 7px !important;
+    font-size: 0.88rem !important;
+}
+.stTextInput input:focus, .stTextArea textarea:focus {
+    border-color: #88C0D0 !important;
+    box-shadow: 0 0 0 2px rgba(136,192,208,0.25) !important;
+}
+
+/* ── Select boxes & multiselect ── */
+.stSelectbox > div, .stMultiSelect > div {
+    border-radius: 7px !important;
+}
+
+/* ── Slider ── */
+.stSlider [data-testid="stSlider"] > div {
+    border-radius: 999px;
+}
+
+/* ── Radio buttons ── */
+.stRadio label {
+    color: #D8DEE9;
+    font-size: 0.88rem;
+}
+
+/* ── Footer override ── */
+.footer-bar {
+    text-align: center;
+    color: #4C566A;
+    font-size: 0.78rem;
+    padding-top: 8px;
+    letter-spacing: 0.03em;
+}
+
+/* ── Hide pagination anchor ── */
+[id^="top-anchor-"] {
+    display: block;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+/* ── Entry card wrapper (adds subtle north-card feel) ── */
+.entry-card {
+    background-color: #3B4252;
+    border: 1px solid #434C5E;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    transition: box-shadow 0.2s ease;
+}
+.entry-card:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+}
+</style>
 """, unsafe_allow_html=True)
 
 
@@ -179,138 +366,146 @@ def display_image_with_description(row: pd.Series, index: int, thumbnail_size: i
     if edit_key not in st.session_state:
         st.session_state[edit_key] = False
     
-    with st.container():
-        col1, col2 = st.columns([1, 2])
-        
-        with col1:
-            try:
-                if not image_path.exists():
-                    st.error(f"❌ Image not found: {image_path.name}")
-                    st.caption(f"📁 {image_path}")
-                else:
-                    original_image = Image.open(image_path)
-                    width, height = original_image.size
-                    file_size = image_path.stat().st_size / 1024
-                    
-                    thumbnail = create_thumbnail(image_path, thumbnail_size)
-                    if thumbnail:
-                        st.image(thumbnail, caption=None, width=thumbnail_size)
-                        st.caption(f"📁 {image_path.name}")
-                        st.caption(f"📐 {width}×{height} | {file_size:.1f} KB")
-                    else:
-                        st.error("Could not load image")
-                    
-            except Exception as e:
-                st.error(f"Error loading image: {str(e)}")
+    col1, col2 = st.columns([1, 2])
+    
+    with col1:
+        try:
+            if not image_path.exists():
+                st.error(f"❌ Image not found: {image_path.name}")
                 st.caption(f"📁 {image_path}")
-        
-        with col2:
-            # Display timestamps if available
-            if created_at is not None or modified_at is not None:
-                timestamp_text = ""
-                if created_at is not None and not pd.isna(created_at):
-                    timestamp_text += f"📅 Created: {format_datetime(created_at)}"
-                if modified_at is not None and not pd.isna(modified_at):
-                    if timestamp_text:
-                        timestamp_text += " | "
-                    timestamp_text += f"✏️ Modified: {format_datetime(modified_at)}"
-                
-                if timestamp_text:
-                    st.markdown(
-                        f'<div class="timestamp-box">{timestamp_text}</div>',
-                        unsafe_allow_html=True
-                    )
-            
-            st.markdown("### Prompt")
-            
-            if st.session_state[edit_key]:
-                edited_description = st.text_area(
-                    "Edit prompt:",
-                    value=description,
-                    height=300,
-                    key=f"edit_textarea_{index}",
-                    label_visibility="collapsed"
-                )
-                
-                btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 3])
-                
-                with btn_col1:
-                    if st.button("💾 Save", key=f"save_{index}", use_container_width=True, type="primary"):
-                        df = st.session_state[df_key]
-                        mask = df['image_path'] == str(image_path)
-                        df.loc[mask, 'description'] = edited_description
-                        
-                        # Update modified_at timestamp
-                        if 'modified_at' in df.columns:
-                            df.loc[mask, 'modified_at'] = pd.Timestamp.now()
-                        
-                        st.session_state[df_key] = df
-                        
-                        if save_parquet_db(df, st.session_state.parquet_path):
-                            st.session_state[edit_key] = False
-                            st.success("✓ Prompt saved!", icon="✅")
-                            st.rerun()
-                        else:
-                            st.error("Failed to save changes")
-                
-                with btn_col2:
-                    if st.button("❌ Cancel", key=f"cancel_{index}", use_container_width=True):
-                        st.session_state[edit_key] = False
-                        st.rerun()
-                
-                st.caption(f"📝 {len(edited_description)} characters")
-            
             else:
+                original_image = Image.open(image_path)
+                width, height = original_image.size
+                file_size = image_path.stat().st_size / 1024
+                
+                thumbnail = create_thumbnail(image_path, thumbnail_size)
+                if thumbnail:
+                    st.image(thumbnail, caption=None, width=thumbnail_size)
+                    st.caption(f"📁 {image_path.name}")
+                    st.caption(f"📐 {width}×{height} | {file_size:.1f} KB")
+                else:
+                    st.error("Could not load image")
+                
+        except Exception as e:
+            st.error(f"Error loading image: {str(e)}")
+            st.caption(f"📁 {image_path}")
+    
+    with col2:
+        # 1. Filename box (Top)
+        st.markdown(
+            f'<div class="filename-box">🖼️ {image_path.name}</div>',
+            unsafe_allow_html=True
+        )
+        
+        # 2. Timestamps bar (if available)
+        if created_at is not None or modified_at is not None:
+            timestamp_parts = []
+            if created_at is not None and not pd.isna(created_at):
+                timestamp_parts.append(f"📅 Created: {format_datetime(created_at)}")
+            if modified_at is not None and not pd.isna(modified_at):
+                timestamp_parts.append(f"✏️ Modified: {format_datetime(modified_at)}")
+            
+            if timestamp_parts:
+                timestamp_text = " &nbsp;·&nbsp; ".join(timestamp_parts)
                 st.markdown(
-                    f'<div class="description-box">{description}</div>',
+                    f'<div class="timestamp-box">{timestamp_text}</div>',
                     unsafe_allow_html=True
                 )
-                
-                st.markdown("")
-                
-                btn_col1, btn_col2, btn_col3, btn_col4 = st.columns([1, 1, 1, 1])
-                
-                with btn_col1:
-                    if st.button(f"✏️ Edit", key=f"edit_{index}", use_container_width=True):
-                        st.session_state[edit_key] = True
-                        st.rerun()
-                
-                with btn_col2:
-                    if st.button(f"📋 Copy", key=f"copy_desc_{index}", use_container_width=True):
-                        try:
-                            pyperclip.copy(description)
-                            st.toast("✓ Copied!", icon="✅")
-                        except:
-                            st.session_state[f'show_copy_{index}'] = True
-                
-                with btn_col3:
-                    if st.button(f"📁 Path", key=f"copy_path_{index}", use_container_width=True):
-                        try:
-                            pyperclip.copy(str(image_path))
-                            st.toast("✓ Path copied!", icon="✅")
-                        except:
-                            st.session_state[f'show_copy_path_{index}'] = True
-                
-                with btn_col4:
-                    st.download_button(
-                        label="💾 Text",
-                        data=description,
-                        file_name=f"{image_path.stem}.txt",
-                        mime="text/plain",
-                        key=f"download_{index}",
-                        use_container_width=True
-                    )
-                
-                if st.session_state.get(f'show_copy_{index}', False):
-                    st.text_area("Select and copy:", value=description, height=100, key=f"manual_copy_{index}")
-                
-                if st.session_state.get(f'show_copy_path_{index}', False):
-                    st.text_area("Select and copy path:", value=str(image_path), height=50, key=f"manual_copy_path_{index}")
-
-                
-                st.caption(f"📝 {len(description)} characters | Full path: {image_path}")
         
-        st.divider()
+        st.markdown(
+            "<p style='font-size:0.72rem; color:#81A1C1; text-transform:uppercase;"
+            " letter-spacing:0.09em; font-weight:600; margin-bottom:4px;'>Prompt</p>",
+            unsafe_allow_html=True
+        )
+        
+        if st.session_state[edit_key]:
+            edited_description = st.text_area(
+                "Edit prompt:",
+                value=description,
+                height=300,
+                key=f"edit_textarea_{index}",
+                label_visibility="collapsed"
+            )
+            
+            btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 3])
+            
+            with btn_col1:
+                if st.button("💾 Save", key=f"save_{index}", use_container_width=True, type="primary"):
+                    df = st.session_state[df_key]
+                    mask = df['image_path'] == str(image_path)
+                    df.loc[mask, 'description'] = edited_description
+                    
+                    # Update modified_at timestamp
+                    if 'modified_at' in df.columns:
+                        df.loc[mask, 'modified_at'] = pd.Timestamp.now()
+                    
+                    st.session_state[df_key] = df
+                    
+                    if save_parquet_db(df, st.session_state.parquet_path):
+                        st.session_state[edit_key] = False
+                        st.success("✓ Prompt saved!", icon="✅")
+                        st.rerun()
+                    else:
+                        st.error("Failed to save changes")
+            
+            with btn_col2:
+                if st.button("❌ Cancel", key=f"cancel_{index}", use_container_width=True):
+                    st.session_state[edit_key] = False
+                    st.rerun()
+            
+            st.caption(f"📝 {len(edited_description)} characters")
+        
+        else:
+            st.markdown(
+                f'<div class="description-box">{description}</div>',
+                unsafe_allow_html=True
+            )
+            
+            st.markdown("")
+            
+            btn_col1, btn_col2, btn_col3, btn_col4 = st.columns([1, 1, 1, 1])
+            
+            with btn_col1:
+                if st.button(f"✏️ Edit", key=f"edit_{index}", use_container_width=True):
+                    st.session_state[edit_key] = True
+                    st.rerun()
+            
+            with btn_col2:
+                if st.button(f"📋 Copy", key=f"copy_desc_{index}", use_container_width=True):
+                    try:
+                        pyperclip.copy(description)
+                        st.toast("✓ Copied!", icon="✅")
+                    except:
+                        st.session_state[f'show_copy_{index}'] = True
+            
+            with btn_col3:
+                if st.button(f"📁 Path", key=f"copy_path_{index}", use_container_width=True):
+                    try:
+                        pyperclip.copy(str(image_path))
+                        st.toast("✓ Path copied!", icon="✅")
+                    except:
+                        st.session_state[f'show_copy_path_{index}'] = True
+            
+            with btn_col4:
+                st.download_button(
+                    label="💾 Text",
+                    data=description,
+                    file_name=f"{image_path.stem}.txt",
+                    mime="text/plain",
+                    key=f"download_{index}",
+                    use_container_width=True
+                )
+            
+            if st.session_state.get(f'show_copy_{index}', False):
+                st.text_area("Select and copy:", value=description, height=100, key=f"manual_copy_{index}")
+            
+            if st.session_state.get(f'show_copy_path_{index}', False):
+                st.text_area("Select and copy path:", value=str(image_path), height=50, key=f"manual_copy_path_{index}")
+
+            
+            st.caption(f"📝 {len(description)} characters | Full path: {image_path}")
+    
+    st.divider()
 
 
 def render_pagination(current_page: int, total_pages: int):
@@ -318,7 +513,7 @@ def render_pagination(current_page: int, total_pages: int):
     if total_pages <= 1:
         return current_page
     
-    st.markdown("---")
+    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
     
     # Navigation buttons row
     col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
@@ -343,10 +538,10 @@ def render_pagination(current_page: int, total_pages: int):
             st.session_state.current_page = total_pages
             st.rerun()
     
-    # Slider for page navigation - without a static key
+    # Slider for page navigation
     st.markdown("")  # Small spacing
     new_page = st.slider(
-        f"📄 Page {current_page} of {total_pages}",
+        f"Page {current_page} of {total_pages}",
         min_value=1,
         max_value=total_pages,
         value=current_page,
@@ -458,8 +653,13 @@ def main():
     if 'cli_database_path' not in st.session_state:
         st.session_state.cli_database_path = cli_args.database
     
-    st.title("🖼️ Image Gallery Viewer")
-    st.markdown("View images and their AI-generated descriptions from Parquet database")
+    st.title("Image Gallery Viewer")
+    st.markdown(
+        "<p style='color:#81A1C1; font-size:0.97rem; margin-top:-10px;'>"
+        "Browse · Search · Edit · Export &nbsp;— AI prompt database viewer"
+        "</p>",
+        unsafe_allow_html=True
+    )
     
     with st.sidebar:
         st.header("⚙️ Settings")
@@ -525,7 +725,7 @@ def main():
             has_modified_at = 'modified_at' in df.columns
             
             st.markdown("---")
-            st.markdown("### 📊 Statistics")
+            st.markdown("### Statistics")
             col1, col2 = st.columns(2)
             with col1:
                 st.metric("Total Entries", len(df))
@@ -554,7 +754,7 @@ def main():
             st.info("✏️ Click 'Edit' on any description to modify it. Changes are saved to the database.")
             
             st.markdown("---")
-            st.markdown("### 🖼️ Display")
+            st.markdown("### Display")
             thumbnail_size = st.slider(
                 "Thumbnail Size",
                 min_value=150,
@@ -572,7 +772,7 @@ def main():
             )
             
             st.markdown("---")
-            st.markdown("### 🔍 Filters")
+            st.markdown("### Filters")
 
             # Extract subdirectories from image_path for a dropdown
             # We want to find common date-like or folder-like components
@@ -649,7 +849,7 @@ def main():
                     filtered_df = filtered_df[filtered_df['prompt'].isin(selected_prompts)]
             
             st.markdown("---")
-            st.markdown("### 📑 Sorting")
+            st.markdown("### Sorting")
             
             # Build sort options dynamically based on available columns
             sort_options = []
@@ -685,7 +885,7 @@ def main():
             filtered_df = apply_sorting(filtered_df, sort_option)
             
             st.markdown("---")
-            st.markdown("### 🔎 Search")
+            st.markdown("### Search")
             
             search_in = st.selectbox(
                 "Search in",
@@ -736,19 +936,26 @@ def main():
     start_idx = (current_page - 1) * items_per_page
     end_idx = min(start_idx + items_per_page, len(filtered_df))
     
+    # Invisible JS to force scroll to top on every page change
+    st.markdown(
+        f'<img src="x" onerror="window.parent.document.querySelector(\'section.main\').scrollTo(0,0)" style="display:none">',
+        unsafe_allow_html=True
+    )
+    
     st.caption(f"Showing items {start_idx + 1}-{end_idx} of {len(filtered_df)}")
     
     page_df = filtered_df.iloc[start_idx:end_idx]
     for idx, row in page_df.iterrows():
         display_image_with_description(row, idx, thumbnail_size)
     
+    # Pagination at the bottom
     render_pagination(current_page, total_pages)
     
     st.markdown("---")
     st.markdown(
-        "<div style='text-align: center; color: gray;'>"
-        "Image Gallery Viewer | Built with Streamlit | Powered by Parquet"
-        "</div>",
+        '<div class="footer-bar">'
+        'Image Gallery Viewer &nbsp;·&nbsp; Streamlit &nbsp;·&nbsp; Parquet'
+        '</div>',
         unsafe_allow_html=True
     )
 

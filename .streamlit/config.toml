@@ -1,0 +1,7 @@
+[theme]
+base = "dark"
+primaryColor       = "#88C0D0"   # nord8  — buttons, sliders, focus rings
+backgroundColor    = "#2E3440"   # nord0  — main page background
+secondaryBackgroundColor = "#3B4252"  # nord1  — sidebar, stExpander bg
+textColor          = "#D8DEE9"   # nord4  — default body text
+font               = "sans serif"
