@@ -936,9 +936,12 @@ def main():
     start_idx = (current_page - 1) * items_per_page
     end_idx = min(start_idx + items_per_page, len(filtered_df))
     
-    # Invisible JS to force scroll to top on every page change
+    # ZERO-JAVASCRIPT SCROLL-TO-TOP HACK
+    # By rendering a new, invisible text input with 'autofocus' whenever the page number changes,
+    # the browser natively scrolls the window to make this input visible, defeating Streamlit's 
+    # scroll-restoration behavior without using any unreliable JavaScript.
     st.markdown(
-        f'<img src="x" onerror="window.parent.document.querySelector(\'section.main\').scrollTo(0,0)" style="display:none">',
+        f'<input type="text" autofocus style="width: 1px; height: 1px; border: none; padding: 0; margin: 0; opacity: 0;" id="focus_pg_{current_page}">',
         unsafe_allow_html=True
     )
     
