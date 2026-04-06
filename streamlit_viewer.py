@@ -379,52 +379,44 @@ def format_datetime(dt) -> str:
 
 
 def compute_aspect_ratio(width: int, height: int) -> str:
-    """Return a simplified aspect ratio string, snapping to standard ratios if close."""
+    """Return a clean integer ratio (e.g. 16:9), snapping to the best-fitting small integers."""
     if width <= 0 or height <= 0:
         return "N/A"
     
     actual_ratio = width / height
     
-    # Define standard ratios (name, value)
-    # Includes photography, cinematic, print, and paper standards
-    standard_ratios = [
+    # 1. Check "Famous" standard ratios first with a tight tolerance
+    # These are preferred for their recognizable names
+    famous_ratios = [
         ("1:1", 1.0),
         ("4:3", 4/3), ("3:4", 3/4),
         ("3:2", 3/2), ("2:3", 2/3),
-        ("5:4", 5/4), ("4:5", 4/5),
-        ("7:5", 7/5), ("5:7", 5/7),
         ("16:9", 16/9), ("9:16", 9/16),
-        ("16:10", 16/10), ("10:16", 10/16),
         ("21:9", 21/9), ("9:21", 9/21),
-        ("2:1", 2.0), ("1:2", 0.5),
+        ("5:4", 5/4), ("4:5", 4/5),
         ("9:7", 9/7), ("7:9", 7/9),
-        ("√2:1", 1.4142), ("1:√2", 0.7071), # ISO Paper
-        ("φ:1", 1.618), ("1:φ", 0.618),     # Golden Ratio
+        ("16:10", 16/10), ("10:16", 10/16),
+        ("7:5", 7/5), ("5:7", 5/7)
     ]
     
-    # Find the closest standard ratio
-    best_match = None
-    min_diff = float('inf')
-    
-    for name, ratio in standard_ratios:
-        diff = abs(actual_ratio - ratio)
-        if diff < min_diff:
-            min_diff = diff
-            best_match = name
+    for name, ratio in famous_ratios:
+        if abs(actual_ratio - ratio) / ratio < 0.02: # 2% relative error
+            return name
             
-    # Increase tolerance to 5% to catch more recognizable ratios
-    if min_diff < 0.05:
-        return best_match
-        
-    # Fallback to simplified exact ratio or decimal
-    divisor = gcd(width, height)
-    r_w = width // divisor
-    r_h = height // divisor
+    # 2. Fallback: Brute-force find the best-fitting small-integer ratio (x:y where x,y <= 16)
+    # This ensures we NEVER return a decimal like "1.14:1"
+    best_name = "N/A"
+    min_error = float('inf')
     
-    # If the simplified ratio is still complex, use decimal
-    if max(r_w, r_h) > 50:
-        return f"{actual_ratio:.2f}:1"
-    return f"{r_w}:{r_h}"
+    for x in range(1, 17):
+        for y in range(1, 17):
+            ratio = x / y
+            error = abs(actual_ratio - ratio)
+            if error < min_error:
+                min_error = error
+                best_name = f"{x}:{y}"
+                
+    return best_name
 
 
 def display_image_with_description(row: pd.Series, index: int, thumbnail_size: int = 300, df_key: str = "main_df"):
