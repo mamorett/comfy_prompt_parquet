@@ -109,16 +109,20 @@ html, body, [class*="css"] {
     background-color: #3B4252;
     color: #8FBCBB;
     padding: 6px 12px;
-    /* border-radius removed – bottom rounding now on .image-meta-box.last */
     border-left: 3px solid #88C0D0;
     border: 1px solid #4C566A;
     border-top: none;
-    margin-bottom: 0px;               /* zero gap so rows stack flush */
+    margin-bottom: 0px;               /* zero gap if followed by meta */
     font-size: 0.78rem;
     letter-spacing: 0.02em;
 }
+/* When timestamp is the last in the stack */
+.timestamp-box.last {
+    border-radius: 0 0 8px 8px;
+    margin-bottom: 14px;
+}
 
-/* ── Image metadata bar (size / aspect ratio) ── */
+/* ── Image metadata bar (size / aspect ratio / megapixels) ── */
 .image-meta-box {
     background-color: #3B4252;
     color: #D8DEE9;
@@ -126,7 +130,7 @@ html, body, [class*="css"] {
     border-left: 3px solid #81A1C1;   /* slightly different accent vs timestamp's #88C0D0 */
     border: 1px solid #4C566A;
     border-top: none;
-    margin-bottom: 0px;               /* zero gap so rows stack flush */
+    margin-bottom: 0px;
     font-size: 0.78rem;
     letter-spacing: 0.02em;
 }
@@ -470,6 +474,8 @@ def display_image_with_description(row: pd.Series, index: int, thumbnail_size: i
             unsafe_allow_html=True
         )
         
+        has_meta = width is not None and height is not None
+        
         # 2. Timestamps bar (if available)
         if created_at is not None or modified_at is not None:
             timestamp_parts = []
@@ -480,20 +486,22 @@ def display_image_with_description(row: pd.Series, index: int, thumbnail_size: i
             
             if timestamp_parts:
                 timestamp_text = " &nbsp;·&nbsp; ".join(timestamp_parts)
+                ts_class = "timestamp-box" if has_meta else "timestamp-box last"
                 st.markdown(
-                    f'<div class="timestamp-box">{timestamp_text}</div>',
+                    f'<div class="{ts_class}">{timestamp_text}</div>',
                     unsafe_allow_html=True
                 )
         
-        # 3. Image size & aspect ratio bars (if image was readable)
-        if width is not None and height is not None:
+        # 3. Image size, megapixels & aspect ratio bar (if image was readable)
+        if has_meta:
             aspect = compute_aspect_ratio(width, height)
-            st.markdown(
-                f'<div class="image-meta-box">📐 Size: {width}×{height} px</div>',
-                unsafe_allow_html=True
+            mp = (width * height) / 1_000_000
+            meta_text = (
+                f"📐 {width}×{height} ({mp:.2f} MP) &nbsp;·&nbsp; "
+                f"⬛ Ratio: {aspect}"
             )
             st.markdown(
-                f'<div class="image-meta-box last">⬛ Aspect Ratio: {aspect}</div>',
+                f'<div class="image-meta-box last">{meta_text}</div>',
                 unsafe_allow_html=True
             )
         
