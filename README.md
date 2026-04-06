@@ -18,6 +18,8 @@ This project provides a set of tools to extract prompts from ComfyUI-generated i
 ### Viewer (`streamlit_viewer.py`)
 
 *   **Image Gallery**: Displays images and their prompts in a gallery format.
+*   **Image Metadata**: Displays pixel dimensions (e.g. `1024×1024`), total megapixels (e.g. `1.05 MP`), and aspect ratio (e.g. `1:1`) for each image.
+*   **Smart Aspect Ratios**: Automatically snaps to standard aspect ratios (16:9, 4:3, 3:2, 21:9, etc.) within a 2% tolerance for a cleaner display.
 *   **Search and Filter**: Full-text search for prompts, descriptions, and filenames. Filter by prompt, and image status (found or missing).
 *   **Sorting**: Sort images by creation date, modification date, image name, or prompt.
 *   **In-place Editing**: Edit descriptions directly in the web interface and save them back to the database.
@@ -79,6 +81,27 @@ streamlit run streamlit_viewer.py -- --database prompts.parquet
 If you omit the `--database` argument, it will look for a `vision_ai.parquet` file in the current directory.
 
 You can then access the gallery in your web browser at the URL provided by Streamlit (usually `http://localhost:8501`).
+
+### 3. Run with Docker
+
+You can also run the viewer using Docker. This is the recommended way for deployment.
+
+**Build the image:**
+
+```bash
+docker build -t comfy-prompt-viewer .
+```
+
+**Run the container:**
+
+Map your image directory and database file to the container:
+
+```bash
+docker run -p 8501:8501 \
+  -v /path/to/your/images:/data/images \
+  -v /path/to/your/prompts.parquet:/app/prompts.parquet \
+  comfy-prompt-viewer -- --database prompts.parquet
+```
 
 ## License
 
