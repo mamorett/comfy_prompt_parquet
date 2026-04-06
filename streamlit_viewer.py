@@ -10,9 +10,9 @@ Usage:
 """
 
 import streamlit as st
+import streamlit.components.v1 as components
 from pathlib import Path
 from PIL import Image
-import pyperclip
 import io
 import pandas as pd
 import sys
@@ -563,19 +563,27 @@ def display_image_with_description(row: pd.Series, index: int, thumbnail_size: i
             
             with btn_col2:
                 if st.button(f"📋 Copy", key=f"copy_desc_{index}", use_container_width=True):
-                    try:
-                        pyperclip.copy(description)
-                        st.toast("✓ Copied!", icon="✅")
-                    except:
-                        st.session_state[f'show_copy_{index}'] = True
+                    escaped = description.replace('`', '\\`').replace('\\', '\\\\')
+                    components.html(
+                        f"""<script>
+                        navigator.clipboard.writeText(`{escaped}`)
+                          .then(() => {{}}).catch(() => {{}});
+                        </script>""",
+                        height=0
+                    )
+                    st.toast("✓ Copied!", icon="✅")
             
             with btn_col3:
                 if st.button(f"📁 Path", key=f"copy_path_{index}", use_container_width=True):
-                    try:
-                        pyperclip.copy(str(image_path))
-                        st.toast("✓ Path copied!", icon="✅")
-                    except:
-                        st.session_state[f'show_copy_path_{index}'] = True
+                    path_str = str(image_path).replace('`', '\\`').replace('\\', '\\\\')
+                    components.html(
+                        f"""<script>
+                        navigator.clipboard.writeText(`{path_str}`)
+                          .then(() => {{}}).catch(() => {{}});
+                        </script>""",
+                        height=0
+                    )
+                    st.toast("✓ Path copied!", icon="✅")
             
             with btn_col4:
                 st.download_button(
@@ -586,12 +594,6 @@ def display_image_with_description(row: pd.Series, index: int, thumbnail_size: i
                     key=f"download_{index}",
                     use_container_width=True
                 )
-            
-            if st.session_state.get(f'show_copy_{index}', False):
-                st.text_area("Select and copy:", value=description, height=100, key=f"manual_copy_{index}")
-            
-            if st.session_state.get(f'show_copy_path_{index}', False):
-                st.text_area("Select and copy path:", value=str(image_path), height=50, key=f"manual_copy_path_{index}")
 
             
             st.caption(f"📝 {len(description)} characters | Full path: {image_path}")
