@@ -18,6 +18,7 @@ import pandas as pd
 import sys
 import argparse
 from datetime import datetime
+from math import gcd
 
 # Page configuration
 st.set_page_config(
@@ -108,13 +109,31 @@ html, body, [class*="css"] {
     background-color: #3B4252;
     color: #8FBCBB;
     padding: 6px 12px;
-    border-radius: 0 0 8px 8px;
+    /* border-radius removed – bottom rounding now on .image-meta-box.last */
     border-left: 3px solid #88C0D0;
     border: 1px solid #4C566A;
     border-top: none;
-    margin-bottom: 14px;
+    margin-bottom: 0px;               /* zero gap so rows stack flush */
     font-size: 0.78rem;
     letter-spacing: 0.02em;
+}
+
+/* ── Image metadata bar (size / aspect ratio) ── */
+.image-meta-box {
+    background-color: #3B4252;
+    color: #D8DEE9;
+    padding: 5px 12px;
+    border-left: 3px solid #81A1C1;   /* slightly different accent vs timestamp's #88C0D0 */
+    border: 1px solid #4C566A;
+    border-top: none;
+    margin-bottom: 0px;               /* zero gap so rows stack flush */
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
+}
+/* Last meta row before description needs bottom rounding + margin */
+.image-meta-box.last {
+    border-radius: 0 0 8px 8px;
+    margin-bottom: 14px;
 }
 
 /* ── Image shadow ── */
@@ -355,6 +374,49 @@ def format_datetime(dt) -> str:
         return "N/A"
 
 
+def compute_aspect_ratio(width: int, height: int) -> str:
+    """Return a simplified aspect ratio string, snapping to standard ratios if close."""
+    if width <= 0 or height <= 0:
+        return "N/A"
+    
+    actual_ratio = width / height
+    
+    # Define standard ratios (name, value)
+    standard_ratios = [
+        ("1:1", 1.0),
+        ("4:3", 4/3), ("3:4", 3/4),
+        ("3:2", 3/2), ("2:3", 2/3),
+        ("16:9", 16/9), ("9:16", 9/16),
+        ("21:9", 21/9), ("9:21", 9/21),
+        ("5:4", 5/4), ("4:5", 4/5),
+        ("9:7", 9/7), ("7:9", 7/9),
+        ("16:10", 16/10), ("10:16", 10/16)
+    ]
+    
+    # Find the closest standard ratio
+    best_match = None
+    min_diff = float('inf')
+    
+    for name, ratio in standard_ratios:
+        diff = abs(actual_ratio - ratio)
+        if diff < min_diff:
+            min_diff = diff
+            best_match = name
+            
+    # If the match is very close (within 2% error), use the standard name
+    if min_diff < 0.02:
+        return best_match
+        
+    # Fallback to simplified exact ratio or decimal
+    divisor = gcd(width, height)
+    r_w = width // divisor
+    r_h = height // divisor
+    
+    if max(r_w, r_h) > 99:
+        return f"{actual_ratio:.2f}:1"
+    return f"{r_w}:{r_h}"
+
+
 def display_image_with_description(row: pd.Series, index: int, thumbnail_size: int = 300, df_key: str = "main_df"):
     """Display an image with its description."""
     image_path = Path(row['image_path'])
@@ -366,6 +428,15 @@ def display_image_with_description(row: pd.Series, index: int, thumbnail_size: i
     if edit_key not in st.session_state:
         st.session_state[edit_key] = False
     
+    # ── Retrieve dimensions (hoisted for use in both columns) ──
+    width, height = None, None
+    if image_path.exists():
+        try:
+            with Image.open(image_path) as _img:
+                width, height = _img.size
+        except Exception:
+            pass
+
     col1, col2 = st.columns([1, 2])
     
     with col1:
@@ -374,15 +445,17 @@ def display_image_with_description(row: pd.Series, index: int, thumbnail_size: i
                 st.error(f"❌ Image not found: {image_path.name}")
                 st.caption(f"📁 {image_path}")
             else:
-                original_image = Image.open(image_path)
-                width, height = original_image.size
+                # Use pre-computed width/height
                 file_size = image_path.stat().st_size / 1024
                 
                 thumbnail = create_thumbnail(image_path, thumbnail_size)
                 if thumbnail:
                     st.image(thumbnail, caption=None, width=thumbnail_size)
                     st.caption(f"📁 {image_path.name}")
-                    st.caption(f"📐 {width}×{height} | {file_size:.1f} KB")
+                    if width is not None and height is not None:
+                        st.caption(f"📐 {width}×{height} | {file_size:.1f} KB")
+                    else:
+                        st.caption(f"⚖️ {file_size:.1f} KB")
                 else:
                     st.error("Could not load image")
                 
@@ -411,6 +484,18 @@ def display_image_with_description(row: pd.Series, index: int, thumbnail_size: i
                     f'<div class="timestamp-box">{timestamp_text}</div>',
                     unsafe_allow_html=True
                 )
+        
+        # 3. Image size & aspect ratio bars (if image was readable)
+        if width is not None and height is not None:
+            aspect = compute_aspect_ratio(width, height)
+            st.markdown(
+                f'<div class="image-meta-box">📐 Size: {width}×{height} px</div>',
+                unsafe_allow_html=True
+            )
+            st.markdown(
+                f'<div class="image-meta-box last">⬛ Aspect Ratio: {aspect}</div>',
+                unsafe_allow_html=True
+            )
         
         st.markdown(
             "<p style='font-size:0.72rem; color:#81A1C1; text-transform:uppercase;"
