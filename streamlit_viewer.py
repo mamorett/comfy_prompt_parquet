@@ -18,6 +18,7 @@ import pandas as pd
 import sys
 import argparse
 from datetime import datetime
+from math import gcd
 
 # Page configuration
 st.set_page_config(
@@ -108,13 +109,35 @@ html, body, [class*="css"] {
     background-color: #3B4252;
     color: #8FBCBB;
     padding: 6px 12px;
-    border-radius: 0 0 8px 8px;
     border-left: 3px solid #88C0D0;
     border: 1px solid #4C566A;
     border-top: none;
-    margin-bottom: 14px;
+    margin-bottom: 0px;               /* zero gap if followed by meta */
     font-size: 0.78rem;
     letter-spacing: 0.02em;
+}
+/* When timestamp is the last in the stack */
+.timestamp-box.last {
+    border-radius: 0 0 8px 8px;
+    margin-bottom: 14px;
+}
+
+/* ── Image metadata bar (size / aspect ratio / megapixels) ── */
+.image-meta-box {
+    background-color: #3B4252;
+    color: #D8DEE9;
+    padding: 5px 12px;
+    border-left: 3px solid #81A1C1;   /* slightly different accent vs timestamp's #88C0D0 */
+    border: 1px solid #4C566A;
+    border-top: none;
+    margin-bottom: 0px;
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
+}
+/* Last meta row before description needs bottom rounding + margin */
+.image-meta-box.last {
+    border-radius: 0 0 8px 8px;
+    margin-bottom: 14px;
 }
 
 /* ── Image shadow ── */
@@ -355,6 +378,47 @@ def format_datetime(dt) -> str:
         return "N/A"
 
 
+def compute_aspect_ratio(width: int, height: int) -> str:
+    """Return a clean integer ratio (e.g. 16:9), snapping to the best-fitting small integers."""
+    if width <= 0 or height <= 0:
+        return "N/A"
+    
+    actual_ratio = width / height
+    
+    # 1. Check "Famous" standard ratios first with a tight tolerance
+    # These are preferred for their recognizable names
+    famous_ratios = [
+        ("1:1", 1.0),
+        ("4:3", 4/3), ("3:4", 3/4),
+        ("3:2", 3/2), ("2:3", 2/3),
+        ("16:9", 16/9), ("9:16", 9/16),
+        ("21:9", 21/9), ("9:21", 9/21),
+        ("5:4", 5/4), ("4:5", 4/5),
+        ("9:7", 9/7), ("7:9", 7/9),
+        ("16:10", 16/10), ("10:16", 10/16),
+        ("7:5", 7/5), ("5:7", 5/7)
+    ]
+    
+    for name, ratio in famous_ratios:
+        if abs(actual_ratio - ratio) / ratio < 0.02: # 2% relative error
+            return name
+            
+    # 2. Fallback: Brute-force find the best-fitting small-integer ratio (x:y where x,y <= 16)
+    # This ensures we NEVER return a decimal like "1.14:1"
+    best_name = "N/A"
+    min_error = float('inf')
+    
+    for x in range(1, 17):
+        for y in range(1, 17):
+            ratio = x / y
+            error = abs(actual_ratio - ratio)
+            if error < min_error:
+                min_error = error
+                best_name = f"{x}:{y}"
+                
+    return best_name
+
+
 def display_image_with_description(row: pd.Series, index: int, thumbnail_size: int = 300, df_key: str = "main_df"):
     """Display an image with its description."""
     image_path = Path(row['image_path'])
@@ -366,6 +430,15 @@ def display_image_with_description(row: pd.Series, index: int, thumbnail_size: i
     if edit_key not in st.session_state:
         st.session_state[edit_key] = False
     
+    # ── Retrieve dimensions (hoisted for use in both columns) ──
+    width, height = None, None
+    if image_path.exists():
+        try:
+            with Image.open(image_path) as _img:
+                width, height = _img.size
+        except Exception:
+            pass
+
     col1, col2 = st.columns([1, 2])
     
     with col1:
@@ -374,15 +447,17 @@ def display_image_with_description(row: pd.Series, index: int, thumbnail_size: i
                 st.error(f"❌ Image not found: {image_path.name}")
                 st.caption(f"📁 {image_path}")
             else:
-                original_image = Image.open(image_path)
-                width, height = original_image.size
+                # Use pre-computed width/height
                 file_size = image_path.stat().st_size / 1024
                 
                 thumbnail = create_thumbnail(image_path, thumbnail_size)
                 if thumbnail:
                     st.image(thumbnail, caption=None, width=thumbnail_size)
                     st.caption(f"📁 {image_path.name}")
-                    st.caption(f"📐 {width}×{height} | {file_size:.1f} KB")
+                    if width is not None and height is not None:
+                        st.caption(f"📐 {width}×{height} | {file_size:.1f} KB")
+                    else:
+                        st.caption(f"⚖️ {file_size:.1f} KB")
                 else:
                     st.error("Could not load image")
                 
@@ -397,6 +472,8 @@ def display_image_with_description(row: pd.Series, index: int, thumbnail_size: i
             unsafe_allow_html=True
         )
         
+        has_meta = width is not None and height is not None
+        
         # 2. Timestamps bar (if available)
         if created_at is not None or modified_at is not None:
             timestamp_parts = []
@@ -407,10 +484,24 @@ def display_image_with_description(row: pd.Series, index: int, thumbnail_size: i
             
             if timestamp_parts:
                 timestamp_text = " &nbsp;·&nbsp; ".join(timestamp_parts)
+                ts_class = "timestamp-box" if has_meta else "timestamp-box last"
                 st.markdown(
-                    f'<div class="timestamp-box">{timestamp_text}</div>',
+                    f'<div class="{ts_class}">{timestamp_text}</div>',
                     unsafe_allow_html=True
                 )
+        
+        # 3. Image size, megapixels & aspect ratio bar (if image was readable)
+        if has_meta:
+            aspect = compute_aspect_ratio(width, height)
+            mp = (width * height) / 1_000_000
+            meta_text = (
+                f"📐 {width}×{height} ({mp:.2f} MP) &nbsp;·&nbsp; "
+                f"⬛ Ratio: {aspect}"
+            )
+            st.markdown(
+                f'<div class="image-meta-box last">{meta_text}</div>',
+                unsafe_allow_html=True
+            )
         
         st.markdown(
             "<p style='font-size:0.72rem; color:#81A1C1; text-transform:uppercase;"
