@@ -1,108 +1,124 @@
-# Comfy Prompt Parquet
+# 🖼️ Comfy Prompt Parquet
 
-This project provides a set of tools to extract prompts from ComfyUI-generated images and view them in a user-friendly web interface. It consists of two main components:
+> **The ultimate toolkit for ComfyUI prompt management.**  
+> Extract, browse, edit, and embed your generative AI metadata with ease.
 
-1.  A Python script (`comfyprompt_extractor.py`) to extract positive prompts from PNG metadata and store them in a Parquet database.
-2.  A Streamlit application (`streamlit_viewer.py`) to browse, search, and edit the extracted prompts and their corresponding images.
+---
 
-## Features
+## ✨ Overview
 
-### Extractor (`comfyprompt_extractor.py`)
+Comfy Prompt Parquet is a high-performance suite of tools designed for creators using ComfyUI. It bridges the gap between raw image files and a searchable, editable database.
 
-*   **Prompt Extraction**: Extracts positive prompts from ComfyUI PNG metadata.
-*   **Parquet Database**: Saves extracted data to an efficient Parquet file.
-*   **Multiple Input Sources**: Process images from a directory, a single file, a glob pattern, or a list of files. Supports recursive directory search.
-*   **Idempotency**: Skips already processed images unless the `--override` flag is used.
-*   **Graceful Shutdown**: Saves progress on `Ctrl-C`.
+- 🛠️ **Extractor**: Scans your images and builds a blazing-fast Parquet database.
+- 🎨 **Viewer**: A beautiful, Nord-themed Streamlit app to browse and edit prompts.
+- 📦 **Embedder**: Create portable databases with embedded, resized thumbnails.
 
-### Viewer (`streamlit_viewer.py`)
+---
 
-*   **Image Gallery**: Displays images and their prompts in a gallery format.
-*   **Image Metadata**: Displays pixel dimensions (e.g. `1024×1024`), total megapixels (e.g. `1.05 MP`), and aspect ratio (e.g. `1:1`) for each image.
-*   **Smart Aspect Ratios**: Automatically snaps to standard aspect ratios (16:9, 4:3, 3:2, 21:9, etc.) within a 2% tolerance for a cleaner display.
-*   **Search and Filter**: Full-text search for prompts, descriptions, and filenames. Filter by prompt, and image status (found or missing).
-*   **Sorting**: Sort images by creation date, modification date, image name, or prompt.
-*   **In-place Editing**: Edit descriptions directly in the web interface and save them back to the database.
-*   **Copy to Clipboard**: Easily copy prompts, descriptions, and file paths.
-*   **Pagination**: Navigate through large collections of images.
+## 🚀 Key Features
 
-## Requirements
+### 🌈 Elegant UI (Streamlit)
+- **Nord Dark Theme**: A premium, easy-on-the-eyes aesthetic.
+- **Unified Controls**: Consistent, glowing interactive buttons for Edit, Copy, Path, and Download.
+- **Smart Metadata**: Automatic calculation of megapixels and "snapping" aspect ratios (e.g., 16:9, 3:2).
+- **In-place Editing**: Modify prompts directly in the browser; changes save instantly to the database.
 
-The required Python libraries are listed in `requirements.txt`. You can install them using pip:
+### 🔍 Powerful Discovery
+- **Full-Text Search**: Instant filtering across filenames, prompts, and paths.
+- **Advanced Filtering**: Filter by subdirectory, existence on disk, or specific prompt tags.
+- **Deep Sorting**: Sort by creation date, modification date, or alphabetically.
+
+### 📦 Portable Data
+- **Image Embedding**: Convert path-based databases into standalone files.
+- **Smart Resizing**: Embed images at **25% scale** (or custom) to keep database size manageable.
+- **Safety First**: Embedding and resizing are performed **entirely in memory**. Your original image files are never touched.
+
+---
+
+## 🛠️ Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/your-repo/comfy-prompt-parquet.git
+cd comfy-prompt-parquet
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-## Usage
+---
 
-### 1. Extract Prompts
+## 📖 CLI Reference
 
-Run the `comfyprompt_extractor.py` script to populate your Parquet database.
+### 🛠️ Extractor (`comfyprompt_extractor.py`)
+Builds or updates your Parquet database from image metadata.
 
-**Process all PNGs in a directory:**
+| Option | Shorthand | Description |
+| :--- | :--- | :--- |
+| `--input` | `-i` | **Required.** Directory, single file, or glob pattern (e.g., `*.png`). |
+| `--database` | `--db` | **Required.** Path to the output Parquet database file. |
+| `--recursive` | `-r` | Recursively search subdirectories for images. |
+| `--override` | | Replace existing entries in the database for the same files. |
+| `--file-list` | `-f` | Provide a text file containing a list of image paths to process. |
+| `--use-parameters`| | Use A1111/parameters extraction instead of ComfyUI workflow JSON. |
+| `--help` | `-h` | Show all available options and examples. |
 
+**Example:**
 ```bash
-python comfyprompt_extractor.py -i /path/to/your/images --database prompts.parquet
+python comfyprompt_extractor.py -i ./images -r --db gallery.parquet --override
 ```
 
-**Recursively process all PNGs in a directory and subdirectories:**
+---
 
+### 🎨 Viewer (`streamlit_viewer.py`)
+Launch the interactive web gallery.
+
+| Option | Shorthand | Description |
+| :--- | :--- | :--- |
+| `--database` | `--db` | Path to the Parquet database to load. |
+| `--help` | `-h` | Show all available options. |
+
+> **Note**: To pass arguments to the script via Streamlit, use the `--` separator:  
+> `streamlit run streamlit_viewer.py -- --db gallery.parquet`
+
+---
+
+### 📦 Embedder (`embed_images.py`)
+Embeds resized images directly into the Parquet file for portability.
+
+| Option | Shorthand | Description |
+| :--- | :--- | :--- |
+| `--input` | `-i` | **Required.** Path to the input Parquet file. |
+| `--output` | `-o` | **Required.** Path to the output Parquet file. |
+| `--scale` | `-s` | Resizing scale factor (default: `0.25` for 25% size). |
+| `--dry-run` | `-d` | Verify paths and estimate final size without writing files. |
+| `--col` | | Column name containing image paths (default: `image_path`). |
+| `--target` | | Column name for embedded bytes (default: `image_bytes`). |
+
+**Example:**
 ```bash
-python comfyprompt_extractor.py -i /path/to/your/images --database prompts.parquet --recursive
+python embed_images.py -i gallery.parquet -o portable.parquet -s 0.2 -d
 ```
 
-**Process a single file:**
+---
+
+## 🐳 Docker Deployment
+
+The viewer is ready for containerized environments.
 
 ```bash
-python comfyprompt_extractor.py -i image.png --database prompts.parquet
-```
+# Build the image
+docker build -t comfy-viewer .
 
-**Process files using a glob pattern:**
-
-```bash
-python comfyprompt_extractor.py -i "images/*.png" --database prompts.parquet
-```
-
-**Override existing entries:**
-
-```bash
-python comfyprompt_extractor.py -i /path/to/your/images --database prompts.parquet --override
-```
-
-### 2. View the Gallery
-
-Run the `streamlit_viewer.py` script to launch the web interface.
-
-```bash
-streamlit run streamlit_viewer.py -- --database prompts.parquet
-```
-
-If you omit the `--database` argument, it will look for a `vision_ai.parquet` file in the current directory.
-
-You can then access the gallery in your web browser at the URL provided by Streamlit (usually `http://localhost:8501`).
-
-### 3. Run with Docker
-
-You can also run the viewer using Docker. This is the recommended way for deployment.
-
-**Build the image:**
-
-```bash
-docker build -t comfy-prompt-viewer .
-```
-
-**Run the container:**
-
-Map your image directory and database file to the container:
-
-```bash
+# Run the container
 docker run -p 8501:8501 \
-  -v /path/to/your/images:/data/images \
-  -v /path/to/your/prompts.parquet:/app/prompts.parquet \
-  comfy-prompt-viewer -- --database prompts.parquet
+  -v /path/to/images:/data/images \
+  -v /path/to/collection.parquet:/app/collection.parquet \
+  comfy-viewer -- --db collection.parquet
 ```
 
-## License
+---
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+## 📜 License
+Licensed under the [MIT License](LICENSE). 
+Created with ❤️ for the AI Art community.
