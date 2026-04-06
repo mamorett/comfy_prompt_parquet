@@ -386,15 +386,20 @@ def compute_aspect_ratio(width: int, height: int) -> str:
     actual_ratio = width / height
     
     # Define standard ratios (name, value)
+    # Includes photography, cinematic, print, and paper standards
     standard_ratios = [
         ("1:1", 1.0),
         ("4:3", 4/3), ("3:4", 3/4),
         ("3:2", 3/2), ("2:3", 2/3),
-        ("16:9", 16/9), ("9:16", 9/16),
-        ("21:9", 21/9), ("9:21", 9/21),
         ("5:4", 5/4), ("4:5", 4/5),
+        ("7:5", 7/5), ("5:7", 5/7),
+        ("16:9", 16/9), ("9:16", 9/16),
+        ("16:10", 16/10), ("10:16", 10/16),
+        ("21:9", 21/9), ("9:21", 9/21),
+        ("2:1", 2.0), ("1:2", 0.5),
         ("9:7", 9/7), ("7:9", 7/9),
-        ("16:10", 16/10), ("10:16", 10/16)
+        ("√2:1", 1.4142), ("1:√2", 0.7071), # ISO Paper
+        ("φ:1", 1.618), ("1:φ", 0.618),     # Golden Ratio
     ]
     
     # Find the closest standard ratio
@@ -407,8 +412,8 @@ def compute_aspect_ratio(width: int, height: int) -> str:
             min_diff = diff
             best_match = name
             
-    # If the match is very close (within 2% error), use the standard name
-    if min_diff < 0.02:
+    # Increase tolerance to 5% to catch more recognizable ratios
+    if min_diff < 0.05:
         return best_match
         
     # Fallback to simplified exact ratio or decimal
@@ -416,7 +421,8 @@ def compute_aspect_ratio(width: int, height: int) -> str:
     r_w = width // divisor
     r_h = height // divisor
     
-    if max(r_w, r_h) > 99:
+    # If the simplified ratio is still complex, use decimal
+    if max(r_w, r_h) > 50:
         return f"{actual_ratio:.2f}:1"
     return f"{r_w}:{r_h}"
 
