@@ -1,0 +1,32 @@
+# Ignore Git and other metadata
+.git
+.gitignore
+.geminiignore
+
+# Ignore Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Ignore IDE settings
+.vscode/
+.idea/
+
+# Ignore local database files
+*.parquet
+*.png
+*.jpg
+*.jpeg
+
+# Ignore the size_plan.md and any other docs
+size_plan.md
+README.md
+LICENSE
+comfyprompt_extractor.py
