@@ -11,6 +11,7 @@ Usage:
 
 import streamlit as st
 import streamlit.components.v1 as components
+import json
 from pathlib import Path
 from PIL import Image
 import io
@@ -419,6 +420,87 @@ def compute_aspect_ratio(width: int, height: int) -> str:
     return best_name
 
 
+def clipboard_button_html(label: str, text_to_copy: str) -> str:
+    """Return a self-contained HTML page with a single copy-to-clipboard button.
+
+    The button fires entirely in the browser (no Streamlit round-trip), so the
+    user gesture is preserved and both navigator.clipboard.writeText() and the
+    document.execCommand('copy') fallback work reliably everywhere.
+    """
+    data = json.dumps(text_to_copy)   # safe JS string literal
+    return f"""
+    <!DOCTYPE html><html><head>
+    <meta charset="utf-8">
+    <style>
+      * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+      body {{ background: transparent; }}
+      button {{
+        width: 100%;
+        height: 38px;
+        background: transparent;
+        color: #FAFAFA;
+        border: 1px solid rgba(250,250,250,0.2);
+        border-radius: 7px;
+        font-size: 0.84rem;
+        font-weight: 500;
+        cursor: pointer;
+        font-family: 'Inter', system-ui, sans-serif;
+        transition: background-color 0.15s ease, box-shadow 0.15s ease;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding: 0 8px;
+      }}
+      button:hover {{
+        box-shadow: 0 0 0 2px #88C0D0;
+        background: rgba(136,192,208,0.1);
+      }}
+      button.ok {{
+        background: rgba(163,190,140,0.2) !important;
+        border-color: #A3BE8C !important;
+        color: #A3BE8C !important;
+      }}
+    </style>
+    </head><body>
+    <button id="btn" onclick="doCopy()">{label}</button>
+    <script>
+    var _text = {data};
+    function doCopy() {{
+      var btn = document.getElementById('btn');
+      if (navigator.clipboard && navigator.clipboard.writeText) {{
+        navigator.clipboard.writeText(_text)
+          .then(function() {{ flash(btn); }})
+          .catch(function() {{ legacyCopy(_text, btn); }});
+      }} else {{
+        legacyCopy(_text, btn);
+      }}
+    }}
+    function legacyCopy(text, btn) {{
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;top:0;left:0;width:2px;height:2px;opacity:0.01;';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      var ok = false;
+      try {{ ok = document.execCommand('copy'); }} catch(e) {{}}
+      document.body.removeChild(ta);
+      if (ok) flash(btn);
+    }}
+    function flash(btn) {{
+      var orig = btn.innerHTML;
+      btn.innerHTML = '\u2713 Copied!';
+      btn.classList.add('ok');
+      setTimeout(function() {{
+        btn.innerHTML = orig;
+        btn.classList.remove('ok');
+      }}, 2000);
+    }}
+    </script>
+    </body></html>
+    """
+
+
 def display_image_with_description(row: pd.Series, index: int, thumbnail_size: int = 300, df_key: str = "main_df"):
     """Display an image with its description."""
     image_path = Path(row['image_path'])
@@ -561,29 +643,22 @@ def display_image_with_description(row: pd.Series, index: int, thumbnail_size: i
                     st.session_state[edit_key] = True
                     st.rerun()
             
+            # Copy & Path use pure-HTML buttons rendered in browser iframes.
+            # This preserves the user gesture so document.execCommand('copy')
+            # works synchronously — no Streamlit server round-trip involved.
             with btn_col2:
-                if st.button(f"📋 Copy", key=f"copy_desc_{index}", use_container_width=True):
-                    escaped = description.replace('`', '\\`').replace('\\', '\\\\')
-                    components.html(
-                        f"""<script>
-                        navigator.clipboard.writeText(`{escaped}`)
-                          .then(() => {{}}).catch(() => {{}});
-                        </script>""",
-                        height=0
-                    )
-                    st.toast("✓ Copied!", icon="✅")
+                components.html(
+                    clipboard_button_html("📋 Copy", description),
+                    height=38,
+                    scrolling=False
+                )
             
             with btn_col3:
-                if st.button(f"📁 Path", key=f"copy_path_{index}", use_container_width=True):
-                    path_str = str(image_path).replace('`', '\\`').replace('\\', '\\\\')
-                    components.html(
-                        f"""<script>
-                        navigator.clipboard.writeText(`{path_str}`)
-                          .then(() => {{}}).catch(() => {{}});
-                        </script>""",
-                        height=0
-                    )
-                    st.toast("✓ Path copied!", icon="✅")
+                components.html(
+                    clipboard_button_html("📁 Path", str(image_path)),
+                    height=38,
+                    scrolling=False
+                )
             
             with btn_col4:
                 st.download_button(
