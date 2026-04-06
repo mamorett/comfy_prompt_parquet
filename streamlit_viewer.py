@@ -198,29 +198,43 @@ hr {
 }
 
 /* ── Buttons ── */
-.stButton > button {
+.stButton > button, .stDownloadButton > button {
     border-radius: 7px;
     font-size: 0.84rem;
     font-weight: 500;
-    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+    height: 38px;
+    border: 1px solid #4C566A !important;
+    background-color: transparent;
+    color: #ECEFF4;
+    transition: all 0.15s ease;
+    width: 100%;
 }
-.stButton > button:hover {
+.stButton > button:hover, .stDownloadButton > button:hover {
     box-shadow: 0 0 0 2px #88C0D0;
+    border-color: #88C0D0 !important;
+    background-color: rgba(136, 192, 208, 0.1) !important;
+    color: #88C0D0;
 }
 /* Primary button specifically */
 .stButton > button[kind="primary"] {
     background-color: #81A1C1;
     color: #2E3440;
     font-weight: 600;
+    border: 1px solid #81A1C1 !important;
 }
 .stButton > button[kind="primary"]:hover {
     background-color: #88C0D0;
+    border-color: #88C0D0 !important;
+    color: #2E3440;
+    box-shadow: 0 0 0 2px rgba(136,192,208,0.4);
 }
 
 /* ── Download button ── */
+.stDownloadButton {
+    width: 100%;
+}
 .stDownloadButton > button {
-    border-radius: 7px;
-    font-size: 0.84rem;
+    width: 100%;
 }
 
 /* ── Text inputs & text areas ── */
@@ -433,27 +447,34 @@ def clipboard_button_html(label: str, text_to_copy: str) -> str:
     <meta charset="utf-8">
     <style>
       * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-      body {{ background: transparent; }}
+      body {{ 
+        background: transparent; 
+        padding: 3px;
+        overflow: hidden;
+      }}
       button {{
         width: 100%;
         height: 38px;
         background: transparent;
-        color: #FAFAFA;
-        border: 1px solid rgba(250,250,250,0.2);
+        color: #ECEFF4;
+        border: 1px solid #4C566A;
         border-radius: 7px;
         font-size: 0.84rem;
         font-weight: 500;
         cursor: pointer;
-        font-family: 'Inter', system-ui, sans-serif;
-        transition: background-color 0.15s ease, box-shadow 0.15s ease;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        transition: all 0.15s ease;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         padding: 0 8px;
+        outline: none;
       }}
       button:hover {{
         box-shadow: 0 0 0 2px #88C0D0;
+        border-color: #88C0D0 !important;
         background: rgba(136,192,208,0.1);
+        color: #88C0D0;
       }}
       button.ok {{
         background: rgba(163,190,140,0.2) !important;
@@ -649,14 +670,14 @@ def display_image_with_description(row: pd.Series, index: int, thumbnail_size: i
             with btn_col2:
                 components.html(
                     clipboard_button_html("📋 Copy", description),
-                    height=38,
+                    height=44,
                     scrolling=False
                 )
             
             with btn_col3:
                 components.html(
                     clipboard_button_html("📁 Path", str(image_path)),
-                    height=38,
+                    height=44,
                     scrolling=False
                 )
             
