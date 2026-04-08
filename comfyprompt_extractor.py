@@ -181,7 +181,7 @@ def extract_positive_from_parameters_strict(metadata: Dict[str, Any]) -> str:
         if stripped:
             positive_lines.append(stripped)
 
-    prompt_text = ' '.join(positive_lines).strip()
+    prompt_text = '\n'.join(positive_lines).strip()
     return prompt_text if is_valid_prompt_text(prompt_text) else ''
 
 
@@ -289,7 +289,7 @@ def extract_positive_from_workflow(workflow_data: Dict, processed_nodes: set) ->
                 
                 # Handle both string and list types
                 if isinstance(prompt_value, list):
-                    prompt_text = ' '.join(str(item) for item in prompt_value if item)
+                    prompt_text = '\n'.join(str(item) for item in prompt_value if item)
                 else:
                     prompt_text = str(prompt_value) if prompt_value else None
             
@@ -421,7 +421,7 @@ def extract_positive_from_prompt_data(prompt_data: Dict, processed_nodes: set) -
                         # Handle both string and list types
                         if resolved_value is not None:
                             if isinstance(resolved_value, list):
-                                text_content = ' '.join(str(item) for item in resolved_value if item)
+                                text_content = '\n'.join(str(item) for item in resolved_value if item)
                             elif isinstance(resolved_value, str):
                                 text_content = resolved_value
                             else:
@@ -729,7 +729,7 @@ def process_image(
         
         # Concatenate multiple prompts with separator
         if positive_prompts:
-            prompt_text = ' | '.join([p['text'] for p in positive_prompts])
+            prompt_text = '\n---\n'.join([p['text'] for p in positive_prompts])
         else:
             prompt_text = ''
 
